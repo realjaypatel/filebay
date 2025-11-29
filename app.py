@@ -59,6 +59,34 @@ def home():
                            total_pages=total_pages)
 
 # ---------------------------
+# upload Link Page
+# ---------------------------
+@app.route("/upload", methods=["GET", "POST"])
+def upload_sheet():
+    if request.method == "POST":
+        import pandas as pd
+        file = request.files["file"]
+
+        df = pd.read_excel(file) if file.filename.endswith(".xlsx") else pd.read_csv(file)
+
+        for _, row in df.iterrows():
+            links.insert_one({
+                "id": next_id(),
+                "title": row.get("title", ""),
+                "url": row.get("url", ""),
+                "size": row.get("size", ""),
+                "category": row.get("category", "all"),
+                "desc": row.get("desc", ""),
+                "tags": [t.strip() for t in str(row.get("tags", "")).split(",") if t.strip()],
+                "submitted_by": row.get("submitted_by", "Sheet"),
+                "timestamp": datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            })
+
+        return "Uploaded!"
+
+    return render_template("upload.html")
+
+# ---------------------------
 # Add Link Page
 # ---------------------------
 @app.route("/add", methods=["GET", "POST"])
