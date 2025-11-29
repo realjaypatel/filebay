@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}{{ link.title }} :: OpenLeaks{% endblock %}
+
+{% block content %}
+
+<!-- Banner -->
+<div align="center" class="mb-4">
+  <img style="height: 250px" src="/static/p2.jpg" alt="Banner" />
+</div>
+
+<div align="center" class="mb-4">
+  <b>Share anything. Stay open. Explore the unknown.</b>
+</div>
+
+<div class="container">
+
+  <!-- MAIN LINK INFO -->
+  <div class="panel panel-success">
+    <div class="panel-heading">
+      <h3 class="panel-title">{{ link.title }}</h3>
+    </div>
+
+    <div class="panel-body">
+
+      <div class="row mb-2">
+        <div class="col-md-2"><strong>Category:</strong></div>
+        <div class="col-md-4">{{ link.category or 'General' }}</div>
+
+        <div class="col-md-2"><strong>Date:</strong></div>
+        <div class="col-md-4">{{ link.timestamp or 'Just now' }}</div>
+      </div>
+
+      <div class="row mb-2">
+        <div class="col-md-2"><strong>Submitter:</strong></div>
+        <div class="col-md-4"><span class="text-success">{{ link.submitted_by or "Anon" }}</span></div>
+
+        <div class="col-md-2"><strong>Tags:</strong></div>
+        <div class="col-md-4">
+          {% if link.tags %}
+            {% for t in link.tags %}
+              <a href="/tag/{{ t }}" class="label label-info">{{ t }}</a>
+            {% endfor %}
+          {% else %}
+            <span class="text-muted">No tags</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="row mb-2">
+        <div class="col-md-2"><strong>File size:</strong></div>
+        <div class="col-md-4">{{ link.size or 'Unknown' }}</div>
+
+        <div class="col-md-2"><strong>External Link:</strong></div>
+        <div class="col-md-4">
+          <a href="{{ link.url }}" target="_blank">{{ link.url }}</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="panel-footer clearfix">
+      <a href="{{ link.url }}" target="_blank"><i class="fa fa-link fa-fw"></i> Visit Link</a>
+      <span class="pull-right text-muted">ID: {{ link.id }}</span>
+    </div>
+  </div>
+
+  <!-- OPEN GRAPH PREVIEW -->
+  <div id="og-card" class="panel panel-info" style="display:none;">
+    <div class="panel-heading"><h3 class="panel-title">Website Preview</h3></div>
+    <div class="panel-body">
+
+      <img id="og-img" src="" class="img-responsive" style="display:none; max-height:200px; margin-bottom:10px;">
+
+      <h4 id="og-title"></h4>
+      <p id="og-desc" class="text-muted"></p>
+
+    </div>
+  </div>
+
+  <!-- AUTO FILE PREVIEWS -->
+  <div class="panel panel-default">
+    <div class="panel-heading"><h3 class="panel-title">Preview</h3></div>
+    <div class="panel-body">
+
+      <!-- Image -->
+      {% if link.url.lower().endswith(('.png','.jpg','.jpeg','.gif','.webp')) %}
+        <img src="{{ link.url }}" class="img-responsive">
+      {% endif %}
+
+      <!-- Audio -->
+      {% if link.url.lower().endswith(('.mp3','.wav','.ogg','.m4a')) %}
+        <audio controls class="w-100"><source src="{{ link.url }}"></audio>
+      {% endif %}
+
+      <!-- Video -->
+      {% if link.url.lower().endswith(('.mp4','.webm','.mkv','.mov')) %}
+        <video controls class="img-responsive" style="width:100%;"><source src="{{ link.url }}"></video>
+      {% endif %}
+
+      <!-- PDF -->
+      {% if link.url.lower().endswith('.pdf') %}
+        <iframe src="{{ link.url }}" style="width:100%; height:600px; border:none;"></iframe>
+      {% endif %}
+
+      <!-- YouTube -->
+      {% if "youtube.com" in link.url or "youtu.be" in link.url %}
+      <div class="embed-responsive embed-responsive-16by9 mt-2">
+          <iframe class="embed-responsive-item"
+            src="https://www.youtube.com/embed/{{ link.url.split('=')[-1] }}"
+            allowfullscreen></iframe>
+      </div>
+      {% endif %}
+
+
+
+    </div>
+  </div>
+
+  <!-- DESCRIPTION -->
+  <div class="panel panel-default">
+    <div class="panel-heading"><h3 class="panel-title">Description</h3></div>
+    <div class="panel-body" id="torrent-description">
+      {{ link.desc or "No description provided." }}
+    </div>
+  </div>
+
+  <!-- COMMENTS -->
+  <div class="panel panel-default">
+    <div class="panel-heading"><h3 class="panel-title">Comments</h3></div>
+    <div class="panel-body">
+
+      {% for c in comments %}
+      <div class="panel panel-default">
+        <div class="panel-body">
+          <b>{{ c.username }}</b> 
+          <small class="text-muted">{{ c.created_at }}</small>
+          <p>{{ c.content }}</p>
+        </div>
+      </div>
+      {% endfor %}
+
+      <form method="POST" action="/comment/{{ link.id }}" class="mt-3">
+        <input name="username" class="form-control" placeholder="Your name">
+        <textarea name="content" class="form-control mt-2" rows="3" placeholder="Comment..." required></textarea>
+        <button class="btn btn-success mt-2">Post Comment</button>
+      </form>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ========================= OG PREVIEW LOADER ========================= -->
+<script>
+fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("{{ link.url }}"))
+  .then(res => res.json())
+  .then(data => {
+      let html = data.contents;
+      let parser = new DOMParser();
+      let doc = parser.parseFromString(html, "text/html");
+
+      let ogTitle = doc.querySelector('meta[property=\"og:title\"]')?.content;
+      let ogDesc  = doc.querySelector('meta[property=\"og:description\"]')?.content;
+      let ogImg   = doc.querySelector('meta[property=\"og:image\"]')?.content;
+
+      if (ogTitle || ogDesc || ogImg) {
+
+          document.getElementById("og-card").style.display = "block";
+
+          if (ogImg) {
+              let img = document.getElementById("og-img");
+              img.src = ogImg;
+              img.style.display = "block";
+          }
+
+          if (ogTitle) document.getElementById("og-title").innerText = ogTitle;
+          if (ogDesc)  document.getElementById("og-desc").innerText = ogDesc;
+      }
+  });
+</script>
+
+{% endblock %}

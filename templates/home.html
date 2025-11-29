@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Browse :: OpenLeaks{% endblock %}
+
+{% block content %}
+
+<div align="center" class="mb-4">
+  <img style="height: 250px" src="/static/p2.jpg" alt="Banner" />
+</div>
+
+<div align="center" class="mb-4">
+  <b>Share anything. Stay open. Explore the unknown.</b>
+</div>
+
+<div class="container">
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover table-striped torrent-list">
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 80px">Category</th>
+          <th style="width: auto">Name</th>
+          <th class="text-center" style="width: 140px">Tags</th>
+          <th class="text-center" style="width: 70px">Link</th>
+          <th class="text-center" style="width: 100px">Size</th>
+          <th class="text-center" style="width: 140px">Date</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for data in links %}
+        <tr>
+
+          <!-- Category Icon -->
+          <td class="text-center align-middle">
+            <img
+              src="/static/img/icons/linkey/{{ data.category or 'default' }}.png"
+              alt="{{ data.category or 'Category' }}"
+              class="category-icon"
+              style="height: 24px;"
+              onerror="this.src='https://nyaa.land/static/img/icons/nyaa/1_4.png'"
+            />
+          </td>
+
+          <!-- Title -->
+          <td class="align-middle">
+            <a href="{{ url_for('view_link', link_id=data.id) }}">
+              {{ data.title }}
+            </a>
+          </td>
+
+          <!-- Tags (Clickable) -->
+          <td class="text-center align-middle">
+            {% if data.tags %}
+                {% for t in data.tags %}
+                    <a href="/tag/{{ t }}" class="label label-info" style="margin:2px;">
+                        {{ t }}
+                    </a>
+                {% endfor %}
+            {% else %}
+                <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+
+          <!-- External Link -->
+          <td class="text-center align-middle">
+            {% if data.url %}
+            <a href="{{ data.url }}" target="_blank">
+              <i class="fa fa-fw fa-external-link"></i>
+            </a>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+
+          <!-- Size -->
+          <td class="text-center align-middle">{{ data.size or '—' }}</td>
+
+          <!-- Date -->
+          <td class="text-center align-middle">
+            {{ data.timestamp or 'N/A' }}
+          </td>
+
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-muted">
+            No links shared yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+<nav aria-label="Page navigation" class="text-center">
+  <ul class="pagination">
+
+    <!-- Previous -->
+    {% if page > 1 %}
+    <li>
+      <a href="?page={{ page - 1 }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('tag') %}&tag={{ request.args.get('tag') }}{% endif %}">
+        Previous
+      </a>
+    </li>
+    {% else %}
+    <li class="disabled"><span>Previous</span></li>
+    {% endif %}
+
+    <!-- Page Numbers -->
+    {% for p in range(1, total_pages + 1) %}
+      {% if p == page %}
+      <li class="active"><span>{{ p }}</span></li>
+      {% else %}
+      <li>
+        <a href="?page={{ p }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('tag') %}&tag={{ request.args.get('tag') }}{% endif %}">
+          {{ p }}
+        </a>
+      </li>
+      {% endif %}
+    {% endfor %}
+
+    <!-- Next -->
+    {% if page < total_pages %}
+    <li>
+      <a href="?page={{ page + 1 }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('tag') %}&tag={{ request.args.get('tag') }}{% endif %}">
+        Next
+      </a>
+    </li>
+    {% else %}
+    <li class="disabled"><span>Next</span></li>
+    {% endif %}
+
+  </ul>
+</nav>
+</div>
+
+{% endblock %}
