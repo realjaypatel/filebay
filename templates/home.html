@@ -31,13 +31,7 @@
 
           <!-- Category Icon -->
           <td class="text-center align-middle">
-            <img
-              src="/static/img/icons/linkey/{{ data.category or 'default' }}.png"
-              alt="{{ data.category or 'Category' }}"
-              class="category-icon"
-              style="height: 24px;"
-              onerror="this.src='https://nyaa.land/static/img/icons/nyaa/1_4.png'"
-            />
+            {{ data.category }}
           </td>
 
           <!-- Title -->
